@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>貪食蛇</title>
+    <link rel="stylesheet" href="">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: slategray;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            padding: 0;
+            margin: 0;
+        }
+
+        #gameBox {
+
+            background-color: black;
+            /* border: 1px solid brown; */
+        }
+
+        .btn_start {
+            font-size: 20px;
+            border-radius: 10px;
+            background-color: slategrey;
+        }
+
+        .btn_restart {
+            font-size: 20px;
+            border-radius: 10px;
+            background-color: slategrey;
+        }
+
+        .divModel {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        .divEnd {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>貪食蛇</h1>
+    <canvas id="gameBox" width='400' height='400'></canvas>
+
+    <div class="divModel">
+        <h2>遊戲方式:使用鍵盤上下左右或鍵盤wasd鍵來操作</h2>
+        <h2>獲勝方式:贏得25即可獲勝</h2>
+        <h2 id="endGameTitle">
+            分數: <span class="scoreDate">0</span>
+        </h2>
+    </div>
+    <div class="divEnd">
+        <button class="btn_start">開始</button>
+        <button class="btn_restart">重新</button>
+    </div>
+    <script>
+        let gameTimeStart
+        let apple = [];
+        let appleData = {}
+        let appleX;
+        let appleY;
+        let score = 0;
+        let gameBox = document.querySelector('#gameBox')
+        let ctx = gameBox.getContext('2d')
+        let btn_start = document.querySelector('.btn_start')
+        let btn_restart = document.querySelector('.btn_restart')
+        let scoreDate = document.querySelector('.scoreDate')
+        let endGameTitle = document.querySelector('#endGameTitle')
+        btn_start.addEventListener('click', startGame)
+        let body = document.querySelector('body')
+        let speed = 5
+        //建構一隻蛇
+        let boxSize = 20;
+        let snake = {
+            body: [{
+                x: (boxSize / 2), y: (boxSize / 2)
+            }],
+            size: 5,
+            direction: { x: 0, y: -1 }
+        }
+
+
+        function startGame() {
+
+            gameTimeStart = setTimeout(startGame, 1000 / speed)
+            ctx.fillStyle = 'black'
+            ctx.fillRect(0, 0, 400, 400)
+
+            //劃出蛇來+移動
+            moveSnake()
+            
+            //蛇陣亡條件
+            snakeDeath()
+
+            //建立蘋果位置
+            newMath()
+            putApple()
+
+            //吃掉蘋果
+            eatApple()
+
+            //獲勝
+            endGame()
+
+
+        }
+        function endGame() {
+            if (score === 25) {
+                endGameTitle.innerHTML = "恭喜您已獲勝，請點選重新，再開始遊戲"
+                clearTimeout(gameTimeStart)
+                btn_restart.addEventListener('click', function () {
+                    location.reload();
+
+                })
+            }
+        }
+        function newMath() {
+            appleX = Math.floor(Math.random() * boxSize)
+            appleY = Math.floor(Math.random() * boxSize)
+        }
+        function putApple() {
+            //蘋果再生 排除生在身體裡
+            for (let i = 0; i < snake.body.length; i++) {
+                if (snake.body[i].x === appleX && snake.body[i].y === appleY) {
+                    newMath()
+                }
+            }
+            if (apple.length === 0) {
+                appleData.x = appleX
+                appleData.y = appleY
+                apple.push(appleData)
+
+            }
+            ctx.fillStyle = 'red'
+            ctx.fillRect(
+                apple[0].x * boxSize + 2, apple[0].y * boxSize + 2, boxSize - 2, boxSize - 2
+            )
+
+
+        }
+        function eatApple() {
+
+            if (snake.body[0].x === apple[0].x && snake.body[0].y === apple[0].y) {
+                console.log('我吃了蘋果')
+                snake.size += 1
+                score += 1
+                speed += 1
+                if (speed >= 20) {
+                    speed = 20
+                }
+                scoreDate.innerHTML = score
+                apple.pop()
+                // putApple()
+            }
+
+        }
+
+
+        function moveSnake() {
+            // ctx.fillRect(snake.body[0].x * boxSize, snake.body[0].y * boxSize, boxSize, boxSize)
+            let newSnake = {
+                x: snake.body[0].x + snake.direction.x,
+                y: snake.body[0].y + snake.direction.y
+            }
+            snake.body.unshift(newSnake)
+            while (snake.body.length > snake.size) {
+                snake.body.pop()
+
+            }
+            for (let i = 0; i < snake.body.length; i++) {
+                ctx.fillStyle = 'green'
+                ctx.fillRect(
+                    (snake.body[i].x * boxSize) + 2,
+                    (snake.body[i].y * boxSize) + 2,
+                    boxSize - 2,
+                    boxSize - 2
+                )
+            }
+
+            ctx.fillStyle = 'blue'
+            ctx.fillRect(snake.body[0].x * boxSize + 2, snake.body[0].y * boxSize + 2, boxSize - 2, boxSize - 2)
+        }
+        function snakeDeath() {
+            if (isDeath()) {
+                gameOver()
+                return
+            }
+            function isDeath() {
+                if (snake.body[0].x < 0 || snake.body[0].x > 19) {
+
+                    return true
+                } else if (snake.body[0].y < 0 || snake.body[0].y > 19) {
+                    return true
+                }
+                for (let i = 1; i < snake.body.length; i++) {
+                    if ((snake.body[0].x === snake.body[i].x) && (snake.body[0].y === snake.body[i].y)) {
+                        return true
+                    }
+                }
+            }
+            function gameOver() {
+                clearTimeout(gameTimeStart)
+                ctx.fillStyle = 'white'
+                ctx.font = "50px serif"
+                ctx.fillText('GameOver', 100, 200)
+                btn_restart.addEventListener('click', function () {
+                    location.reload();
+                    startGame()
+
+                })
+
+                body.addEventListener('keydown', gameAgain)
+                function gameAgain(e) {
+                    if (e.keyCode === 32) {
+                        location.reload();
+                        startGame()
+                    }
+                }
+
+            }
+        }
+
+        //控制
+        body.addEventListener('keydown', keyDown)
+        function keyDown(e) {
+            console.log(e.keyCode)
+            //上38下40左37右39 w87 a65 s83 d68
+            if (e.keyCode === 38 || e.keyCode === 87) {
+                if (snake.direction.y === 1)
+                    return
+                snake.direction.x = 0;
+                snake.direction.y = -1
+            } else if (e.keyCode === 40 || e.keyCode === 83) {
+                if (snake.direction.y === -1)
+                    return
+                snake.direction.x = 0;
+                snake.direction.y = 1
+            } else if (e.keyCode === 37 || e.keyCode === 65) {
+                if (snake.direction.x === 1)
+                    return
+                snake.direction.x = -1;
+                snake.direction.y = 0;
+            } else if (e.keyCode === 39 || e.keyCode === 68) {
+                if (snake.direction.x === -1)
+                    return
+                snake.direction.x = 1;
+                snake.direction.y = 0;
+            }
+
+            if (e.keyCode === 32) {
+                startGame()
+            }
+
+        }
+
+
+    </script>
+</body>
+
+</html>
